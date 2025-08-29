@@ -1,3 +1,5 @@
+use crate::prime_numbers;
+
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
 #[derive(serde::Deserialize, serde::Serialize)]
 #[serde(default)] // if we add new fields, give them default values when deserializing old state
@@ -7,6 +9,11 @@ pub struct TemplateApp {
 
     #[serde(skip)] // This how you opt-out of serialization of a field
     value: f32,
+    top_text_edit: String,
+    prime_test: f32,
+    random_text: String,
+    #[serde(skip)] // This how you opt-out of serialization of a field
+    text_edit_amount: f32,
 }
 
 impl Default for TemplateApp {
@@ -15,6 +22,10 @@ impl Default for TemplateApp {
             // Example stuff:
             label: "Hello World!".to_owned(),
             value: 2.7,
+            top_text_edit: String::from("~/notadirectory/"),
+            prime_test: 1.0,
+            random_text: String::from("Hello"),
+            text_edit_amount: 1.0,
         }
     }
 }
@@ -60,6 +71,9 @@ impl eframe::App for TemplateApp {
                     });
                     ui.add_space(16.0);
                 }
+                
+                // Testing for the file explorer
+                ui.text_edit_singleline(&mut self.top_text_edit);
 
                 egui::widgets::global_theme_preference_buttons(ui);
             });
@@ -75,16 +89,42 @@ impl eframe::App for TemplateApp {
             });
 
             ui.add(egui::Slider::new(&mut self.value, 0.0..=10.0).text("value"));
-            if ui.button("Increment").clicked() {
-                self.value += 1.0;
-            }
-
+            ui.horizontal(|ui| {
+                if ui.button("Increment").clicked() {
+                    self.value += 1.0;
+                }
+                if ui.button("Decrement").clicked() {
+                    self.value -= 1.0;
+                }
+                if ui.button("Max").clicked() {
+                    self.value = 10.0;
+                }
+                if ui.button("Min").clicked() {
+                    self.value = 0.0;
+                }
+            });
+            
             ui.separator();
+            
+            ui.add(egui::DragValue::new(&mut self.prime_test));
+            let is_prime = prime_numbers::is_prime(self.prime_test as i32);
+            ui.label(match is_prime {
+                true => "prime",
+                false => "not prime",
+            });
 
             ui.add(egui::github_link_file!(
                 "https://github.com/emilk/eframe_template/blob/main/",
                 "Source code."
             ));
+
+            ui.add(egui::DragValue::new(&mut self.text_edit_amount));
+
+           egui::ScrollArea::vertical().show(ui, |ui| {
+                for _ in 0..self.text_edit_amount as i32{
+                    ui.text_edit_singleline(&mut self.random_text);
+                } 
+            });
 
             ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
                 powered_by_egui_and_eframe(ui);
